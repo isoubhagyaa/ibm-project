@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NutriAgent — Nutrition Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system,"Segoe UI",system-ui,sans-serif; font-size:14px; line-height:1.6; background:#f0f4f8; color:#1f2328; }
+
+  /* ── Top bar ── */
+  .topbar { background:#1a3a5c; color:#fff; padding:12px 24px; display:flex; align-items:center; justify-content:space-between; }
+  .topbar h1 { font-size:18px; font-weight:600; letter-spacing:.3px; }
+  .topbar span { font-size:12px; opacity:.75; }
+  .badge { background:#3b82d4; color:#fff; padding:2px 10px; border-radius:12px; font-size:11px; margin-left:10px; }
+
+  /* ── Layout ── */
+  .main { max-width:1200px; margin:0 auto; padding:20px; }
+  .section-title { font-size:13px; font-weight:600; color:#57606a; text-transform:uppercase; letter-spacing:.6px; margin:24px 0 10px; }
+
+  /* ── User profile bar ── */
+  .profile-bar { background:#fff; border:1px solid #e5e7eb; border-radius:8px; padding:14px 20px; display:flex; align-items:center; gap:20px; flex-wrap:wrap; }
+  .profile-bar .avatar { width:44px; height:44px; border-radius:50%; background:#3b82d4; color:#fff; display:flex; align-items:center; justify-content:center; font-size:18px; font-weight:700; flex-shrink:0; }
+  .profile-bar .meta { flex:1; }
+  .profile-bar .meta strong { font-size:15px; }
+  .profile-bar .meta span { color:#57606a; font-size:12px; margin-left:8px; }
+  .tag { display:inline-block; background:#eff6ff; color:#3b82d4; border:1px solid #bfdbfe; border-radius:12px; padding:2px 10px; font-size:11px; margin:2px; }
+  .tag.red { background:#fff5f5; color:#dc2626; border-color:#fecaca; }
+  .tag.green { background:#f0fdf4; color:#16a34a; border-color:#bbf7d0; }
+  .tag.purple { background:#faf5ff; color:#7c3aed; border-color:#ddd6fe; }
+
+  /* ── KPI cards ── */
+  .kpi-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:14px; }
+  .kpi { background:#fff; border:1px solid #e5e7eb; border-radius:8px; padding:16px; }
+  .kpi .label { font-size:11px; color:#57606a; font-weight:500; text-transform:uppercase; letter-spacing:.4px; }
+  .kpi .value { font-size:28px; font-weight:700; color:#1f2328; margin:4px 0 2px; }
+  .kpi .sub { font-size:11px; color:#57606a; }
+  .kpi .bar-track { height:5px; background:#e5e7eb; border-radius:3px; margin-top:8px; }
+  .kpi .bar-fill { height:5px; border-radius:3px; }
+
+  /* ── Charts row ── */
+  .charts-row { display:grid; grid-template-columns:1fr 1fr 1fr; gap:14px; }
+  @media(max-width:800px){ .charts-row { grid-template-columns:1fr; } }
+  .card { background:#fff; border:1px solid #e5e7eb; border-radius:8px; padding:18px; }
+  .card h3 { font-size:13px; font-weight:600; margin-bottom:14px; color:#1f2328; }
+  .chart-wrap { position:relative; height:200px; }
+
+  /* ── Weekly table ── */
+  table { width:100%; border-collapse:collapse; font-size:13px; }
+  th { background:#f7f8fa; color:#57606a; font-weight:600; padding:8px 12px; text-align:left; border-bottom:1px solid #e5e7eb; font-size:11px; text-transform:uppercase; letter-spacing:.4px; }
+  td { padding:10px 12px; border-bottom:1px solid #f0f1f3; }
+  tr:last-child td { border-bottom:none; }
+  .pill { display:inline-block; padding:2px 8px; border-radius:10px; font-size:11px; font-weight:600; }
+  .pill.good { background:#f0fdf4; color:#16a34a; }
+  .pill.warn { background:#fffbeb; color:#d97706; }
+  .pill.over { background:#fff5f5; color:#dc2626; }
+
+  /* ── Meal log panel ── */
+  .meal-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  @media(max-width:600px){ .meal-grid { grid-template-columns:1fr; } }
+  .meal-card { border:1px solid #e5e7eb; border-radius:7px; padding:14px; }
+  .meal-card .meal-name { font-weight:600; font-size:13px; }
+  .meal-card .meal-time { font-size:11px; color:#57606a; margin-bottom:8px; }
+  .macro-row { display:flex; gap:10px; flex-wrap:wrap; margin-top:6px; }
+  .macro-pill { font-size:11px; background:#f7f8fa; border:1px solid #e5e7eb; border-radius:4px; padding:2px 8px; }
+
+  /* ── Recommendations panel ── */
+  .reco-list { list-style:none; }
+  .reco-list li { padding:10px 0; border-bottom:1px solid #f0f1f3; font-size:13px; display:flex; gap:10px; align-items:flex-start; }
+  .reco-list li:last-child { border-bottom:none; }
+  .reco-icon { width:22px; height:22px; border-radius:50%; flex-shrink:0; margin-top:1px; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700; }
+  .reco-icon.warn { background:#fef3c7; color:#d97706; }
+  .reco-icon.good { background:#d1fae5; color:#059669; }
+  .reco-icon.info { background:#dbeafe; color:#2563eb; }
+
+  /* ── Deficiency bar ── */
+  .def-item { margin-bottom:10px; }
+  .def-label { display:flex; justify-content:space-between; font-size:12px; margin-bottom:3px; }
+  .def-track { height:8px; background:#e5e7eb; border-radius:4px; }
+  .def-fill { height:8px; border-radius:4px; }
+
+  /* ── Chat panel ── */
+  .chat-window { border:1px solid #e5e7eb; border-radius:8px; overflow:hidden; }
+  .chat-header { background:#1a3a5c; color:#fff; padding:10px 16px; font-size:13px; font-weight:600; display:flex; align-items:center; gap:8px; }
+  .dot { width:8px; height:8px; border-radius:50%; background:#22c55e; display:inline-block; }
+  .chat-body { height:260px; overflow-y:auto; padding:14px; background:#f7f8fa; display:flex; flex-direction:column; gap:10px; }
+  .msg { max-width:80%; padding:10px 14px; border-radius:12px; font-size:13px; line-height:1.5; }
+  .msg.agent { background:#fff; border:1px solid #e5e7eb; align-self:flex-start; border-bottom-left-radius:3px; }
+  .msg.user { background:#1a3a5c; color:#fff; align-self:flex-end; border-bottom-right-radius:3px; }
+  .msg.agent .agent-tag { font-size:10px; color:#3b82d4; font-weight:600; display:block; margin-bottom:3px; }
+  .chat-input { display:flex; border-top:1px solid #e5e7eb; }
+  .chat-input input { flex:1; border:none; padding:12px 16px; font-size:13px; outline:none; background:#fff; }
+  .chat-input button { background:#3b82d4; color:#fff; border:none; padding:12px 20px; cursor:pointer; font-size:13px; font-weight:600; }
+
+  /* ── Agent status ── */
+  .agent-status-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:12px; }
+  .agent-card { background:#fff; border:1px solid #e5e7eb; border-radius:8px; padding:14px 16px; display:flex; align-items:center; gap:12px; }
+  .agent-icon { width:38px; height:38px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:18px; flex-shrink:0; }
+  .agent-card .agent-name { font-weight:600; font-size:13px; }
+  .agent-card .agent-desc { font-size:11px; color:#57606a; }
+  .status-dot { width:8px; height:8px; border-radius:50%; margin-left:auto; flex-shrink:0; }
+  .status-dot.active { background:#22c55e; }
+
+  /* ── Progress toward goal ── */
+  .goal-section { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  @media(max-width:600px){ .goal-section { grid-template-columns:1fr; } }
+
+  footer { text-align:center; font-size:11px; color:#9ca3af; border-top:1px solid #e5e7eb; padding:18px; margin-top:32px; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div style="display:flex;align-items:center;gap:12px;">
+    <h1>NutriAgent</h1>
+    <span class="badge">IBM watsonx.ai</span>
+    <span class="badge" style="background:#7c5cd8;">Langflow</span>
+  </div>
+  <span id="clock" style="font-size:12px;opacity:.75;"></span>
+</div>
+
+<div class="main">
+
+  <!-- ── Profile Bar ── -->
+  <div class="section-title">Current User Profile</div>
+  <div class="profile-bar">
+    <div class="avatar">A</div>
+    <div class="meta">
+      <strong>Amara Johnson</strong>
+      <span>42 yrs · Female · 78 kg · 163 cm</span>
+      <div style="margin-top:4px;">
+        <span class="tag purple">Weight Loss Goal</span>
+        <span class="tag">Halal</span>
+        <span class="tag">West African Cuisine</span>
+        <span class="tag red">Type 2 Diabetes</span>
+        <span class="tag red">Hypertension</span>
+        <span class="tag red">Nut Allergy</span>
+      </div>
+    </div>
+    <div style="text-align:right;">
+      <div style="font-size:11px;color:#57606a;">Daily Target</div>
+      <div style="font-size:22px;font-weight:700;color:#3b82d4;">1,500 kcal</div>
+      <div style="font-size:11px;color:#57606a;">P: 120g · C: 150g · F: 50g</div>
+    </div>
+  </div>
+
+  <!-- ── KPI Cards ── -->
+  <div class="section-title">Today's Summary — Wednesday 18 Jun 2025</div>
+  <div class="kpi-grid">
+    <div class="kpi">
+      <div class="label">Calories</div>
+      <div class="value">1,142</div>
+      <div class="sub">of 1,500 kcal target</div>
+      <div class="bar-track"><div class="bar-fill" style="width:76%;background:#3b82d4;"></div></div>
+    </div>
+    <div class="kpi">
+      <div class="label">Protein</div>
+      <div class="value">88g</div>
+      <div class="sub">of 120g target</div>
+      <div class="bar-track"><div class="bar-fill" style="width:73%;background:#7c5cd8;"></div></div>
+    </div>
+    <div class="kpi">
+      <div class="label">Carbohydrates</div>
+      <div class="value">114g</div>
+      <div class="sub">of 150g target</div>
+      <div class="bar-track"><div class="bar-fill" style="width:76%;background:#f59e0b;"></div></div>
+    </div>
+    <div class="kpi">
+      <div class="label">Fat</div>
+      <div class="value">38g</div>
+      <div class="sub">of 50g target</div>
+      <div class="bar-track"><div class="bar-fill" style="width:76%;background:#10b981;"></div></div>
+    </div>
+    <div class="kpi">
+      <div class="label">Fiber</div>
+      <div class="value">18g</div>
+      <div class="sub">of 25g target</div>
+      <div class="bar-track"><div class="bar-fill" style="width:72%;background:#ef4444;"></div></div>
+    </div>
+    <div class="kpi">
+      <div class="label">Water</div>
+      <div class="value">1.8L</div>
+      <div class="sub">of 2.5L target</div>
+      <div class="bar-track"><div class="bar-fill" style="width:72%;background:#06b6d4;"></div></div>
+    </div>
+    <div class="kpi">
+      <div class="label">Meals Logged</div>
+      <div class="value">3</div>
+      <div class="sub">Breakfast, Lunch, Snack</div>
+      <div class="bar-track"><div class="bar-fill" style="width:75%;background:#84cc16;"></div></div>
+    </div>
+    <div class="kpi">
+      <div class="label">Streak</div>
+      <div class="value">12</div>
+      <div class="sub">days logged in a row</div>
+      <div class="bar-track"><div class="bar-fill" style="width:80%;background:#f97316;"></div></div>
+    </div>
+  </div>
+
+  <!-- ── Charts Row ── -->
+  <div class="section-title">Nutrient Analytics</div>
+  <div class="charts-row">
+    <div class="card">
+      <h3>Weekly Calorie Intake vs. Target</h3>
+      <div class="chart-wrap"><canvas id="calorieChart"></canvas></div>
+    </div>
+    <div class="card">
+      <h3>Today's Macro Breakdown</h3>
+      <div class="chart-wrap"><canvas id="macroChart"></canvas></div>
+    </div>
+    <div class="card">
+      <h3>7-Day Macro Trend</h3>
+      <div class="chart-wrap"><canvas id="trendChart"></canvas></div>
+    </div>
+  </div>
+
+  <!-- ── Deficiency Panel + Recommendations ── -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:0;">
+    <div class="card" style="margin-top:14px;">
+      <h3>Nutrient Deficiencies This Week</h3>
+      <div class="def-item">
+        <div class="def-label"><span>Vitamin D</span><span style="color:#dc2626;font-weight:600;">31% of target</span></div>
+        <div class="def-track"><div class="def-fill" style="width:31%;background:#dc2626;"></div></div>
+      </div>
+      <div class="def-item">
+        <div class="def-label"><span>Iron</span><span style="color:#d97706;font-weight:600;">58% of target</span></div>
+        <div class="def-track"><div class="def-fill" style="width:58%;background:#d97706;"></div></div>
+      </div>
+      <div class="def-item">
+        <div class="def-label"><span>Calcium</span><span style="color:#d97706;font-weight:600;">64% of target</span></div>
+        <div class="def-track"><div class="def-fill" style="width:64%;background:#d97706;"></div></div>
+      </div>
+      <div class="def-item">
+        <div class="def-label"><span>Fiber</span><span style="color:#d97706;font-weight:600;">72% of target</span></div>
+        <div class="def-track"><div class="def-fill" style="width:72%;background:#d97706;"></div></div>
+      </div>
+      <div class="def-item">
+        <div class="def-label"><span>Potassium</span><span style="color:#3b82d4;font-weight:600;">85% of target</span></div>
+        <div class="def-track"><div class="def-fill" style="width:85%;background:#3b82d4;"></div></div>
+      </div>
+      <div class="def-item">
+        <div class="def-label"><span>Protein</span><span style="color:#16a34a;font-weight:600;">91% of target</span></div>
+        <div class="def-track"><div class="def-fill" style="width:91%;background:#16a34a;"></div></div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:14px;">
+      <h3>AI Agent Recommendations</h3>
+      <ul class="reco-list">
+        <li>
+          <div class="reco-icon warn">!</div>
+          <div><strong>Low Vitamin D:</strong> Add fortified low-fat yogurt or tinned sardines to lunch. Consider a 1000 IU Vitamin D3 supplement — consult your doctor first.</div>
+        </li>
+        <li>
+          <div class="reco-icon warn">!</div>
+          <div><strong>Iron Gap:</strong> Include lentils or dark leafy greens (spinach, kale) with a source of Vitamin C to boost absorption.</div>
+        </li>
+        <li>
+          <div class="reco-icon info">i</div>
+          <div><strong>Diabetes Tip:</strong> Your lunch had a GI of 68 — swap white rice for brown rice or cauliflower rice to keep blood sugar stable.</div>
+        </li>
+        <li>
+          <div class="reco-icon good">✓</div>
+          <div><strong>Great protein intake</strong> today — 88g so far. Aim to hit 120g with a grilled chicken or boiled egg dinner.</div>
+        </li>
+        <li>
+          <div class="reco-icon good">✓</div>
+          <div><strong>Sodium in range:</strong> 1,340mg consumed — well within your 1,500mg hypertension limit. Keep it up!</div>
+        </li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ── Today's Meal Log ── -->
+  <div class="section-title">Today's Meal Log</div>
+  <div class="meal-grid">
+    <div class="meal-card">
+      <div class="meal-name">Breakfast</div>
+      <div class="meal-time">07:30 AM · Logged via text</div>
+      <div style="font-size:13px;color:#1f2328;">Oats with skimmed milk, blueberries + 1 boiled egg</div>
+      <div class="macro-row">
+        <span class="macro-pill">385 kcal</span>
+        <span class="macro-pill">P: 22g</span>
+        <span class="macro-pill">C: 54g</span>
+        <span class="macro-pill">F: 9g</span>
+        <span class="macro-pill">GI: 52</span>
+      </div>
+    </div>
+    <div class="meal-card">
+      <div class="meal-name">Lunch</div>
+      <div class="meal-time">12:45 PM · Logged via voice</div>
+      <div style="font-size:13px;color:#1f2328;">Grilled tilapia, jollof rice (small portion), steamed okra</div>
+      <div class="macro-row">
+        <span class="macro-pill">520 kcal</span>
+        <span class="macro-pill">P: 38g</span>
+        <span class="macro-pill">C: 46g</span>
+        <span class="macro-pill">F: 14g</span>
+        <span class="macro-pill">GI: 68</span>
+      </div>
+    </div>
+    <div class="meal-card">
+      <div class="meal-name">Afternoon Snack</div>
+      <div class="meal-time">03:15 PM · Logged via text</div>
+      <div style="font-size:13px;color:#1f2328;">Apple + 2 tbsp sunflower seeds</div>
+      <div class="macro-row">
+        <span class="macro-pill">237 kcal</span>
+        <span class="macro-pill">P: 7g</span>
+        <span class="macro-pill">C: 29g</span>
+        <span class="macro-pill">F: 11g</span>
+        <span class="macro-pill">GI: 36</span>
+      </div>
+    </div>
+    <div class="meal-card" style="border-style:dashed;border-color:#d1d5db;background:#f9fafb;">
+      <div class="meal-name" style="color:#57606a;">Dinner — Not Yet Logged</div>
+      <div class="meal-time">Target: 358 kcal remaining</div>
+      <div style="font-size:12px;color:#3b82d4;margin-top:8px;">AI Suggestion: Try grilled chicken breast with roasted sweet potato and a side of spinach salad</div>
+    </div>
+  </div>
+
+  <!-- ── Weekly Summary Table ── -->
+  <div class="section-title">Weekly Nutrient Summary</div>
+  <div class="card">
+    <table>
+      <thead>
+        <tr>
+          <th>Day</th>
+          <th>Calories</th>
+          <th>Protein</th>
+          <th>Carbs</th>
+          <th>Fat</th>
+          <th>Fiber</th>
+          <th>Adherence</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>Mon</td><td>1,480</td><td>116g</td><td>142g</td><td>48g</td><td>23g</td><td><span class="pill good">98%</span></td></tr>
+        <tr><td>Tue</td><td>1,620</td><td>124g</td><td>168g</td><td>55g</td><td>20g</td><td><span class="pill warn">92% (over)</span></td></tr>
+        <tr><td>Wed</td><td>1,142 *</td><td>88g *</td><td>114g *</td><td>38g *</td><td>18g *</td><td><span class="pill warn">In progress</span></td></tr>
+        <tr><td>Thu</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td><span style="color:#d1d5db;">Upcoming</span></td></tr>
+        <tr><td>Fri</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td><span style="color:#d1d5db;">Upcoming</span></td></tr>
+        <tr><td>Sat</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td><span style="color:#d1d5db;">Upcoming</span></td></tr>
+        <tr><td>Sun</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td><span style="color:#d1d5db;">Upcoming</span></td></tr>
+        <tr style="background:#f7f8fa;font-weight:600;">
+          <td>Avg (Mon–Tue)</td><td>1,550</td><td>120g</td><td>155g</td><td>51.5g</td><td>21.5g</td><td><span class="pill good">95%</span></td>
+        </tr>
+      </tbody>
+    </table>
+    <div style="font-size:11px;color:#57606a;margin-top:8px;">* Wednesday is in progress — dinner not yet logged.</div>
+  </div>
+
+  <!-- ── Goal Progress ── -->
+  <div class="section-title">Progress Toward Health Goals</div>
+  <div class="goal-section">
+    <div class="card">
+      <h3>Weight Loss Progress</h3>
+      <div style="display:flex;justify-content:space-between;margin-bottom:10px;font-size:13px;">
+        <span>Start: <strong>78 kg</strong></span>
+        <span>Current: <strong>75.4 kg</strong></span>
+        <span>Goal: <strong>68 kg</strong></span>
+      </div>
+      <div class="def-track" style="height:10px;">
+        <div class="def-fill" style="width:26%;background:#3b82d4;height:10px;border-radius:5px;"></div>
+      </div>
+      <div style="font-size:12px;color:#57606a;margin-top:6px;">2.6 kg lost · 7.4 kg to goal · Est. 15 weeks at current deficit</div>
+    </div>
+    <div class="card">
+      <h3>Weekly Streak &amp; Badges</h3>
+      <div style="font-size:30px;font-weight:800;color:#f97316;margin-bottom:4px;">12 days</div>
+      <div style="font-size:12px;color:#57606a;margin-bottom:12px;">Consecutive days with full meal logging</div>
+      <div>
+        <span class="tag green">Protein Pro</span>
+        <span class="tag green">Hydration Hero</span>
+        <span class="tag purple">7-Day Streak</span>
+        <span class="tag" style="color:#57606a;">Fiber Champion (locked)</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Agent Status ── -->
+  <div class="section-title">Multi-Agent System Status</div>
+  <div class="agent-status-grid">
+    <div class="agent-card">
+      <div class="agent-icon" style="background:#dbeafe;">🔍</div>
+      <div>
+        <div class="agent-name">Nutrition Knowledge Agent</div>
+        <div class="agent-desc">ibm/granite-13b-chat-v2 · RAG + USDA API</div>
+      </div>
+      <div class="status-dot active"></div>
+    </div>
+    <div class="agent-card">
+      <div class="agent-icon" style="background:#f0fdf4;">🍽️</div>
+      <div>
+        <div class="agent-name">Diet Recommendation Agent</div>
+        <div class="agent-desc">ibm/granite-13b-instruct-v2 · Meal Planner</div>
+      </div>
+      <div class="status-dot active"></div>
+    </div>
+    <div class="agent-card">
+      <div class="agent-icon" style="background:#fef3c7;">💊</div>
+      <div>
+        <div class="agent-name">Health Advisory Agent</div>
+        <div class="agent-desc">ibm/granite-13b-chat-v2 · Disease Diets</div>
+      </div>
+      <div class="status-dot active"></div>
+    </div>
+    <div class="agent-card">
+      <div class="agent-icon" style="background:#faf5ff;">📋</div>
+      <div>
+        <div class="agent-name">Food Log &amp; Feedback Agent</div>
+        <div class="agent-desc">ibm/granite-3-8b-instruct · Meal Tracker</div>
+      </div>
+      <div class="status-dot active"></div>
+    </div>
+  </div>
+
+  <!-- ── NutriAgent Chat ── -->
+  <div class="section-title">Ask NutriAgent</div>
+  <div class="chat-window">
+    <div class="chat-header"><div class="dot"></div> NutriAgent · IBM watsonx.ai · All agents online</div>
+    <div class="chat-body" id="chatBody">
+      <div class="msg agent">
+        <span class="agent-tag">ORCHESTRATOR</span>
+        Hello Amara! I've analysed your profile — you have Type 2 Diabetes and Hypertension, so I'll keep your suggestions low-GI and sodium-conscious. What can I help you with today?
+      </div>
+      <div class="msg user">What should I eat for dinner tonight? I have chicken and sweet potato at home.</div>
+      <div class="msg agent">
+        <span class="agent-tag">DIET RECOMMENDATION AGENT</span>
+        Great choices! Here's a diabetes &amp; blood-pressure friendly dinner using what you have:<br><br>
+        <strong>Grilled Lemon-Herb Chicken with Roasted Sweet Potato</strong><br>
+        · 150g chicken breast (grilled) — 248 kcal, 47g protein<br>
+        · 150g sweet potato (roasted, no added salt) — 129 kcal, 30g carbs, GI: 44<br>
+        · Side: steamed spinach with a squeeze of lemon<br><br>
+        <strong>Total: ~410 kcal · GI: 46 (low) · Sodium: ~180mg</strong><br>
+        <em>Tip: Season chicken with cumin, garlic, and lemon — no added salt.</em>
+      </div>
+      <div class="msg user">How many calories did I have today so far?</div>
+      <div class="msg agent">
+        <span class="agent-tag">FOOD LOG &amp; FEEDBACK AGENT</span>
+        You've logged <strong>1,142 kcal</strong> today across 3 meals. You have <strong>358 kcal remaining</strong> for dinner. Your protein is at 88g (74% of target) — the chicken dinner above will push you to 135g. Excellent work today!
+      </div>
+    </div>
+    <div class="chat-input">
+      <input type="text" id="chatInput" placeholder="Ask about nutrition, log a meal, or request a diet plan..." />
+      <button onclick="sendChat()">Send</button>
+    </div>
+  </div>
+
+</div><!-- /.main -->
+
+<footer>Made with IBM Bob</footer>
+
+<script>
+// ── Clock ──
+function tick() {
+  const now = new Date();
+  document.getElementById('clock').textContent =
+    now.toLocaleDateString('en-GB', {weekday:'long', day:'numeric', month:'short', year:'numeric'}) +
+    '  ' + now.toLocaleTimeString('en-GB');
+}
+tick(); setInterval(tick, 1000);
+
+// ── Charts ──
+const calorieCtx = document.getElementById('calorieChart').getContext('2d');
+new Chart(calorieCtx, {
+  type: 'bar',
+  data: {
+    labels: ['Mon', 'Tue', 'Wed*', 'Thu', 'Fri', 'Sat', 'Sun'],
+    datasets: [
+      {
+        label: 'Calories Consumed',
+        data: [1480, 1620, 1142, null, null, null, null],
+        backgroundColor: ['#3b82d4','#d97706','#3b82d4','#e5e7eb','#e5e7eb','#e5e7eb','#e5e7eb'],
+        borderRadius: 4
+      },
+      {
+        label: 'Target (1500 kcal)',
+        data: [1500,1500,1500,1500,1500,1500,1500],
+        type: 'line',
+        borderColor: '#ef4444',
+        borderDash: [4,4],
+        borderWidth: 1.5,
+        pointRadius: 0,
+        fill: false
+      }
+    ]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: true, labels: { font: { size: 11 }, boxWidth: 12 } } },
+    scales: {
+      y: { beginAtZero: true, max: 2000, ticks: { font: { size: 11 } }, grid: { color: '#f0f1f3' } },
+      x: { ticks: { font: { size: 11 } }, grid: { display: false } }
+    }
+  }
+});
+
+const macroCtx = document.getElementById('macroChart').getContext('2d');
+new Chart(macroCtx, {
+  type: 'doughnut',
+  data: {
+    labels: ['Protein (88g)', 'Carbs (114g)', 'Fat (38g)'],
+    datasets: [{
+      data: [88*4, 114*4, 38*9],
+      backgroundColor: ['#7c5cd8','#f59e0b','#10b981'],
+      borderWidth: 0,
+      hoverOffset: 4
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    cutout: '65%',
+    plugins: {
+      legend: { position: 'bottom', labels: { font: { size: 11 }, boxWidth: 12, padding: 10 } }
+    }
+  }
+});
+
+const trendCtx = document.getElementById('trendChart').getContext('2d');
+new Chart(trendCtx, {
+  type: 'line',
+  data: {
+    labels: ['Mon', 'Tue', 'Wed*'],
+    datasets: [
+      { label: 'Protein (g)', data: [116, 124, 88], borderColor: '#7c5cd8', backgroundColor: 'rgba(124,92,216,.08)', tension: 0.3, fill: true, borderWidth: 2, pointRadius: 3 },
+      { label: 'Carbs (g)',   data: [142, 168, 114], borderColor: '#f59e0b', backgroundColor: 'rgba(245,158,11,.08)', tension: 0.3, fill: true, borderWidth: 2, pointRadius: 3 },
+      { label: 'Fat (g)',     data: [48,  55,  38],  borderColor: '#10b981', backgroundColor: 'rgba(16,185,129,.08)', tension: 0.3, fill: true, borderWidth: 2, pointRadius: 3 }
+    ]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { labels: { font: { size: 11 }, boxWidth: 12 } } },
+    scales: {
+      y: { beginAtZero: true, ticks: { font: { size: 11 } }, grid: { color: '#f0f1f3' } },
+      x: { ticks: { font: { size: 11 } }, grid: { display: false } }
+    }
+  }
+});
+
+// ── Simple chat demo ──
+const responses = {
+  default: [
+    { agent: 'ORCHESTRATOR', text: "I've received your query. Let me route it to the best agent for you." },
+    { agent: 'NUTRITION KNOWLEDGE AGENT', text: "Based on USDA FoodData Central and my knowledge base, I can help with that. What specific food or nutrient are you curious about?" },
+    { agent: 'HEALTH ADVISORY AGENT', text: "As someone managing Type 2 Diabetes and Hypertension, I recommend focusing on low-GI, low-sodium options. Would you like a specific disease-focused meal suggestion?" },
+    { agent: 'FOOD LOG & FEEDBACK AGENT', text: "Don't forget to log your dinner tonight! You have 358 kcal remaining to reach your daily target of 1,500 kcal." },
+    { agent: 'DIET RECOMMENDATION AGENT', text: "I can generate a full 7-day personalised meal plan for you that accounts for your diabetes, hypertension, halal requirements, and West African cuisine preferences. Would you like that?" }
+  ]
+};
+let rIdx = 0;
+function sendChat() {
+  const input = document.getElementById('chatInput');
+  const val = input.value.trim();
+  if (!val) return;
+  const body = document.getElementById('chatBody');
+  const userMsg = document.createElement('div');
+  userMsg.className = 'msg user';
+  userMsg.textContent = val;
+  body.appendChild(userMsg);
+  input.value = '';
+  const resp = responses.default[rIdx % responses.default.length]; rIdx++;
+  setTimeout(() => {
+    const agentMsg = document.createElement('div');
+    agentMsg.className = 'msg agent';
+    agentMsg.innerHTML = '<span class="agent-tag">' + resp.agent + '</span>' + resp.text;
+    body.appendChild(agentMsg);
+    body.scrollTop = body.scrollHeight;
+  }, 700);
+  body.scrollTop = body.scrollHeight;
+}
+document.getElementById('chatInput').addEventListener('keydown', e => { if (e.key === 'Enter') sendChat(); });
+</script>
+</body>
+</html>

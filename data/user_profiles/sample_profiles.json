@@ -1,0 +1,50 @@
+[
+  {
+    "user_id": "user_001",
+    "name": "Amara Johnson",
+    "age": 42,
+    "gender": "female",
+    "weight_kg": 78,
+    "height_cm": 163,
+    "activity_level": "lightly_active",
+    "health_conditions": ["type_2_diabetes", "hypertension"],
+    "allergies": ["nuts"],
+    "dietary_preferences": ["halal"],
+    "cuisine_preference": "West African",
+    "fitness_goal": "weight_loss",
+    "daily_calorie_target": 1500,
+    "macro_targets": { "protein_g": 120, "carbs_g": 150, "fat_g": 50 }
+  },
+  {
+    "user_id": "user_002",
+    "name": "Raj Patel",
+    "age": 28,
+    "gender": "male",
+    "weight_kg": 70,
+    "height_cm": 175,
+    "activity_level": "very_active",
+    "health_conditions": [],
+    "allergies": ["gluten"],
+    "dietary_preferences": ["vegetarian"],
+    "cuisine_preference": "South Asian",
+    "fitness_goal": "muscle_gain",
+    "daily_calorie_target": 2800,
+    "macro_targets": { "protein_g": 175, "carbs_g": 350, "fat_g": 78 }
+  },
+  {
+    "user_id": "user_003",
+    "name": "Susan Mitchell",
+    "age": 65,
+    "gender": "female",
+    "weight_kg": 68,
+    "height_cm": 158,
+    "activity_level": "sedentary",
+    "health_conditions": ["heart_disease", "high_cholesterol"],
+    "allergies": [],
+    "dietary_preferences": [],
+    "cuisine_preference": "Mediterranean",
+    "fitness_goal": "maintenance",
+    "daily_calorie_target": 1800,
+    "macro_targets": { "protein_g": 90, "carbs_g": 225, "fat_g": 60 }
+  }
+]

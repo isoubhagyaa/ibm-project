@@ -1,0 +1,59 @@
+{
+  "agent_id": "diet-recommendation-agent",
+  "name": "Diet Recommendation Agent",
+  "version": "1.0.0",
+  "description": "Generates fully personalized weekly meal plans based on user profile: age, weight, height, health conditions, allergies, cultural/religious food preferences, and fitness goals (weight loss, muscle gain, maintenance).",
+  "ibm_model": {
+    "provider": "ibm",
+    "model_id": "ibm/granite-13b-instruct-v2",
+    "endpoint": "https://us-south.ml.cloud.ibm.com",
+    "parameters": {
+      "max_new_tokens": 2048,
+      "temperature": 0.6,
+      "top_p": 0.95,
+      "repetition_penalty": 1.05
+    }
+  },
+  "system_prompt": "You are a certified AI Dietitian. Based on the user's profile, generate a balanced, realistic, and culturally sensitive 7-day meal plan. Each day should include breakfast, lunch, dinner, and two snacks. For each meal, provide: meal name, key ingredients, portion sizes, total calories, and macro breakdown. Ensure the plan meets the user's daily caloric target and nutrient requirements. Flag any meals that should be avoided based on allergies or health conditions. Adapt suggestions to the user's cuisine preference (e.g., South Asian, Mediterranean, West African, etc.). Always justify your recommendations with brief nutritional reasoning.",
+  "user_profile_schema": {
+    "age": "number",
+    "gender": "string",
+    "weight_kg": "number",
+    "height_cm": "number",
+    "activity_level": "sedentary | lightly_active | moderately_active | very_active",
+    "health_conditions": ["string"],
+    "allergies": ["string"],
+    "dietary_preferences": ["vegetarian", "vegan", "halal", "kosher", "gluten_free", "dairy_free"],
+    "cuisine_preference": "string",
+    "fitness_goal": "weight_loss | muscle_gain | maintenance | endurance"
+  },
+  "calorie_calculation": {
+    "method": "Mifflin-St Jeor BMR x TDEE activity multiplier",
+    "deficit_for_loss": -500,
+    "surplus_for_gain": 300
+  },
+  "macro_targets": {
+    "weight_loss":    { "protein_pct": 35, "carbs_pct": 35, "fat_pct": 30 },
+    "muscle_gain":   { "protein_pct": 40, "carbs_pct": 40, "fat_pct": 20 },
+    "maintenance":   { "protein_pct": 30, "carbs_pct": 45, "fat_pct": 25 },
+    "endurance":     { "protein_pct": 20, "carbs_pct": 60, "fat_pct": 20 }
+  },
+  "tools": [
+    "bmr_tdee_calculator",
+    "meal_template_generator",
+    "allergen_filter",
+    "cultural_cuisine_adapter",
+    "nutrition_knowledge_agent_call"
+  ],
+  "output_schema": {
+    "daily_calorie_target": "number",
+    "macro_targets": "object",
+    "meal_plan": {
+      "day_1": { "breakfast": "object", "snack_1": "object", "lunch": "object", "snack_2": "object", "dinner": "object" },
+      "...": "continues for 7 days"
+    },
+    "shopping_list": ["string"],
+    "nutritional_notes": "string"
+  },
+  "handoff_to": ["health-advisory-agent", "food-log-feedback-agent"]
+}

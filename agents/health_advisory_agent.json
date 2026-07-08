@@ -1,0 +1,76 @@
+{
+  "agent_id": "health-advisory-agent",
+  "name": "Health Advisory Agent",
+  "version": "1.0.0",
+  "description": "Provides evidence-based preventive nutrition guidance for chronic disease management including Type 2 Diabetes, cardiovascular disease, hypertension, obesity, PCOS, and renal disease. Also handles general wellness, mental health nutrition, and age-specific dietary needs.",
+  "ibm_model": {
+    "provider": "ibm",
+    "model_id": "ibm/granite-13b-chat-v2",
+    "endpoint": "https://us-south.ml.cloud.ibm.com",
+    "parameters": {
+      "max_new_tokens": 1500,
+      "temperature": 0.3,
+      "top_p": 0.9,
+      "repetition_penalty": 1.1
+    }
+  },
+  "system_prompt": "You are a Health Advisory Agent specializing in preventive nutrition and chronic disease management. Provide evidence-based dietary recommendations for managing health conditions through nutrition. Always reference established guidelines (ADA, AHA, WHO, NHS). Clearly distinguish between foods to prioritize, moderate, and avoid for each condition. Include practical substitution suggestions (e.g., 'replace white rice with cauliflower rice for diabetes management'). Add a medical disclaimer that recommendations supplement — not replace — professional medical advice. Never diagnose conditions; only provide dietary guidance based on user-reported conditions.",
+  "supported_conditions": {
+    "metabolic": ["type_2_diabetes", "prediabetes", "metabolic_syndrome", "obesity", "pcos"],
+    "cardiovascular": ["hypertension", "high_cholesterol", "heart_disease", "heart_failure"],
+    "digestive": ["ibs", "crohns_disease", "celiac_disease", "gerd", "fatty_liver"],
+    "renal": ["chronic_kidney_disease", "kidney_stones"],
+    "other": ["osteoporosis", "anemia", "thyroid_disorder", "cancer_supportive_care"]
+  },
+  "guidelines_sources": [
+    "American Diabetes Association (ADA) Standards of Care",
+    "American Heart Association (AHA) Dietary Guidelines",
+    "WHO Global Action Plan for NCDs",
+    "NHS Eatwell Guide",
+    "EFSA Dietary Reference Values"
+  ],
+  "advisory_templates": {
+    "diabetes_friendly": {
+      "priority_foods": ["non-starchy vegetables", "legumes", "whole grains", "lean proteins", "healthy fats"],
+      "limit_foods": ["refined carbs", "sugary drinks", "processed snacks", "white bread"],
+      "avoid_foods": ["trans fats", "high-sugar desserts", "sweetened beverages"],
+      "meal_timing": "3 structured meals + 2 snacks, consistent carb distribution",
+      "glycemic_target": "choose low-GI foods (GI < 55)"
+    },
+    "heart_healthy": {
+      "priority_foods": ["oily fish", "nuts", "olive oil", "fruits", "vegetables", "whole grains"],
+      "limit_foods": ["saturated fats", "sodium >2300mg/day", "red meat"],
+      "avoid_foods": ["trans fats", "processed meats", "high-sodium foods"],
+      "sodium_limit_mg": 2300,
+      "saturated_fat_pct_max": 7
+    },
+    "hypertension": {
+      "diet_pattern": "DASH Diet",
+      "sodium_limit_mg": 1500,
+      "priority_nutrients": ["potassium", "magnesium", "calcium"],
+      "priority_foods": ["bananas", "leafy greens", "low-fat dairy", "nuts", "whole grains"]
+    },
+    "ckd": {
+      "restrict_nutrients": ["phosphorus", "potassium", "sodium"],
+      "protein_target": "0.6-0.8g/kg body weight (non-dialysis)",
+      "avoid_foods": ["processed foods", "dark colas", "bananas", "potatoes (unless leached)"]
+    }
+  },
+  "tools": [
+    "condition_diet_guideline_lookup",
+    "food_safety_checker",
+    "drug_nutrient_interaction_checker",
+    "supplement_recommendation_engine"
+  ],
+  "output_schema": {
+    "condition": "string",
+    "dietary_priority": ["string"],
+    "foods_to_limit": ["string"],
+    "foods_to_avoid": ["string"],
+    "recommended_nutrients": "object",
+    "meal_pattern_advice": "string",
+    "evidence_sources": ["string"],
+    "medical_disclaimer": "string"
+  },
+  "handoff_to": ["diet-recommendation-agent"]
+}

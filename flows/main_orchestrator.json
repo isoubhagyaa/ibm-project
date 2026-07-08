@@ -1,0 +1,154 @@
+{
+  "id": "main-nutrition-orchestrator",
+  "name": "NutriAgent — Main Orchestrator Flow",
+  "description": "IBM Langflow master pipeline that routes user queries to the appropriate nutrition sub-agents using IBM watsonx.ai as the reasoning backbone.",
+  "version": "1.0.0",
+  "nodes": [
+    {
+      "id": "node-input",
+      "type": "ChatInput",
+      "label": "User Query (Text / Voice Transcript / Image Description)",
+      "position": { "x": 100, "y": 300 },
+      "config": {
+        "placeholder": "Ask me about nutrition, log a meal, or request a diet plan..."
+      }
+    },
+    {
+      "id": "node-user-profile",
+      "type": "MemoryStore",
+      "label": "User Profile Store",
+      "position": { "x": 100, "y": 500 },
+      "config": {
+        "store_type": "session_memory",
+        "fields": ["age", "gender", "weight_kg", "height_cm", "health_conditions", "allergies", "dietary_preferences", "cuisine_preference", "fitness_goal", "daily_calorie_target"]
+      }
+    },
+    {
+      "id": "node-orchestrator-llm",
+      "type": "IBMWatsonxLLM",
+      "label": "IBM Granite Orchestrator",
+      "position": { "x": 400, "y": 300 },
+      "config": {
+        "model_id": "ibm/granite-13b-chat-v2",
+        "endpoint": "https://us-south.ml.cloud.ibm.com",
+        "project_id": "${WATSONX_PROJECT_ID}",
+        "api_key": "${IBM_CLOUD_API_KEY}",
+        "max_new_tokens": 512,
+        "temperature": 0.1,
+        "system_prompt": "You are the NutriAgent Orchestrator. Classify the user's intent into one of these categories: [NUTRITION_LOOKUP, MEAL_PLAN_REQUEST, HEALTH_ADVISORY, MEAL_LOG, PROGRESS_CHECK, GENERAL_CHAT]. Based on the intent, route to the appropriate agent. Always consider the user's profile from memory before routing. Return JSON: {\"intent\": \"...\", \"route_to\": \"...\", \"extracted_params\": {...}}"
+      }
+    },
+    {
+      "id": "node-intent-router",
+      "type": "ConditionalRouter",
+      "label": "Intent Router",
+      "position": { "x": 700, "y": 300 },
+      "config": {
+        "conditions": [
+          { "if": "intent == 'NUTRITION_LOOKUP'",   "route_to": "node-nutrition-knowledge-agent" },
+          { "if": "intent == 'MEAL_PLAN_REQUEST'",  "route_to": "node-diet-recommendation-agent" },
+          { "if": "intent == 'HEALTH_ADVISORY'",    "route_to": "node-health-advisory-agent" },
+          { "if": "intent == 'MEAL_LOG'",           "route_to": "node-food-log-agent" },
+          { "if": "intent == 'PROGRESS_CHECK'",     "route_to": "node-food-log-agent" },
+          { "default": true,                        "route_to": "node-orchestrator-llm" }
+        ]
+      }
+    },
+    {
+      "id": "node-nutrition-knowledge-agent",
+      "type": "IBMWatsonxLLM",
+      "label": "Nutrition Knowledge Agent",
+      "position": { "x": 1000, "y": 100 },
+      "config": {
+        "model_id": "ibm/granite-13b-chat-v2",
+        "system_prompt_ref": "agents/nutrition_knowledge_agent.json#system_prompt",
+        "tools": ["usda_food_search", "rag_knowledge_retrieval"]
+      }
+    },
+    {
+      "id": "node-rag-retriever",
+      "type": "ChromaVectorRetriever",
+      "label": "RAG Food Knowledge Base",
+      "position": { "x": 1000, "y": 50 },
+      "config": {
+        "collection": "food_nutrition_kb",
+        "embedding_model": "ibm/slate-125m-english-rtrvr",
+        "top_k": 5
+      }
+    },
+    {
+      "id": "node-diet-recommendation-agent",
+      "type": "IBMWatsonxLLM",
+      "label": "Diet Recommendation Agent",
+      "position": { "x": 1000, "y": 250 },
+      "config": {
+        "model_id": "ibm/granite-13b-instruct-v2",
+        "system_prompt_ref": "agents/diet_recommendation_agent.json#system_prompt",
+        "tools": ["bmr_tdee_calculator", "meal_template_generator", "allergen_filter"]
+      }
+    },
+    {
+      "id": "node-health-advisory-agent",
+      "type": "IBMWatsonxLLM",
+      "label": "Health Advisory Agent",
+      "position": { "x": 1000, "y": 400 },
+      "config": {
+        "model_id": "ibm/granite-13b-chat-v2",
+        "system_prompt_ref": "agents/health_advisory_agent.json#system_prompt",
+        "tools": ["condition_diet_guideline_lookup", "drug_nutrient_interaction_checker"]
+      }
+    },
+    {
+      "id": "node-food-log-agent",
+      "type": "IBMWatsonxLLM",
+      "label": "Food Log & Feedback Agent",
+      "position": { "x": 1000, "y": 550 },
+      "config": {
+        "model_id": "ibm/granite-3-8b-instruct",
+        "system_prompt_ref": "agents/food_log_feedback_agent.json#system_prompt",
+        "tools": ["nlp_food_entity_extractor", "daily_intake_aggregator", "nutrient_gap_analyzer"]
+      }
+    },
+    {
+      "id": "node-response-formatter",
+      "type": "PromptTemplate",
+      "label": "Response Formatter",
+      "position": { "x": 1300, "y": 300 },
+      "config": {
+        "template": "Format the agent response for the user. Be warm, clear, and actionable. If the response contains a meal plan, format it as a readable table. If it contains nutritional data, highlight key values. Agent response: {agent_response}"
+      }
+    },
+    {
+      "id": "node-output",
+      "type": "ChatOutput",
+      "label": "Response to User",
+      "position": { "x": 1600, "y": 300 }
+    },
+    {
+      "id": "node-dashboard-emitter",
+      "type": "WebhookOutput",
+      "label": "Dashboard Data Emitter",
+      "position": { "x": 1600, "y": 500 },
+      "config": {
+        "endpoint": "/api/dashboard/update",
+        "trigger_on_intents": ["MEAL_LOG", "PROGRESS_CHECK"]
+      }
+    }
+  ],
+  "edges": [
+    { "from": "node-input",                     "to": "node-orchestrator-llm" },
+    { "from": "node-user-profile",              "to": "node-orchestrator-llm" },
+    { "from": "node-orchestrator-llm",          "to": "node-intent-router" },
+    { "from": "node-intent-router",             "to": "node-nutrition-knowledge-agent" },
+    { "from": "node-intent-router",             "to": "node-diet-recommendation-agent" },
+    { "from": "node-intent-router",             "to": "node-health-advisory-agent" },
+    { "from": "node-intent-router",             "to": "node-food-log-agent" },
+    { "from": "node-rag-retriever",             "to": "node-nutrition-knowledge-agent" },
+    { "from": "node-nutrition-knowledge-agent", "to": "node-response-formatter" },
+    { "from": "node-diet-recommendation-agent", "to": "node-response-formatter" },
+    { "from": "node-health-advisory-agent",     "to": "node-response-formatter" },
+    { "from": "node-food-log-agent",            "to": "node-response-formatter" },
+    { "from": "node-food-log-agent",            "to": "node-dashboard-emitter" },
+    { "from": "node-response-formatter",        "to": "node-output" }
+  ]
+}

@@ -1,0 +1,31 @@
+watsonx:
+  api_key: "${IBM_CLOUD_API_KEY}"            # Set in environment or .env file
+  project_id: "${WATSONX_PROJECT_ID}"        # IBM watsonx.ai Project ID
+  endpoint: "https://us-south.ml.cloud.ibm.com"
+  region: "us-south"                         # Options: us-south, eu-de, jp-tok, au-syd
+
+models:
+  orchestrator:
+    model_id: "ibm/granite-13b-chat-v2"
+    max_new_tokens: 512
+    temperature: 0.1
+  knowledge_agent:
+    model_id: "ibm/granite-13b-chat-v2"
+    max_new_tokens: 1024
+    temperature: 0.2
+  recommendation_agent:
+    model_id: "ibm/granite-13b-instruct-v2"
+    max_new_tokens: 2048
+    temperature: 0.6
+  health_advisory_agent:
+    model_id: "ibm/granite-13b-chat-v2"
+    max_new_tokens: 1500
+    temperature: 0.3
+  food_log_agent:
+    model_id: "ibm/granite-3-8b-instruct"
+    max_new_tokens: 800
+    temperature: 0.4
+
+embeddings:
+  model_id: "ibm/slate-125m-english-rtrvr"
+  endpoint: "https://us-south.ml.cloud.ibm.com"

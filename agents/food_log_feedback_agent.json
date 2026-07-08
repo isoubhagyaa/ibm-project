@@ -1,0 +1,80 @@
+{
+  "agent_id": "food-log-feedback-agent",
+  "name": "Food Log & Feedback Agent",
+  "version": "1.0.0",
+  "description": "Handles multi-modal meal logging (text, image description, voice transcript), performs instant nutritional analysis against user targets, identifies nutrient gaps, and provides actionable daily/weekly feedback.",
+  "ibm_model": {
+    "provider": "ibm",
+    "model_id": "ibm/granite-3-8b-instruct",
+    "endpoint": "https://us-south.ml.cloud.ibm.com",
+    "parameters": {
+      "max_new_tokens": 800,
+      "temperature": 0.4,
+      "top_p": 0.9,
+      "repetition_penalty": 1.05
+    }
+  },
+  "system_prompt": "You are a Food Log & Feedback Agent. Your role is to: (1) Parse meal descriptions entered as text, image descriptions, or voice transcripts and extract individual food items and estimated portions. (2) Retrieve the nutritional profile of each item via the Nutrition Knowledge Agent. (3) Aggregate daily intake and compare against the user's personalized targets. (4) Identify any nutrient surpluses or deficiencies (highlight critical ones: protein, fiber, vitamins, iron, calcium). (5) Provide a concise, encouraging daily summary with 2-3 actionable tips for the next meal. Be supportive, non-judgmental, and evidence-based.",
+  "input_modalities": {
+    "text": {
+      "example": "I had oatmeal with banana and a cup of black coffee for breakfast",
+      "parser": "nlp_food_entity_extractor"
+    },
+    "image_description": {
+      "example": "Image shows a plate with grilled chicken breast, steamed broccoli, and brown rice",
+      "parser": "vision_food_portion_estimator"
+    },
+    "voice_transcript": {
+      "example": "I ate two slices of whole wheat toast with peanut butter and an apple",
+      "parser": "speech_to_text_then_nlp"
+    }
+  },
+  "tracking_metrics": {
+    "daily": {
+      "calories_consumed": "number",
+      "calories_remaining": "number",
+      "protein_g": "number",
+      "carbs_g": "number",
+      "fat_g": "number",
+      "fiber_g": "number",
+      "water_ml": "number",
+      "meals_logged": "number"
+    },
+    "weekly": {
+      "avg_daily_calories": "number",
+      "goal_adherence_pct": "number",
+      "nutrient_deficiencies": ["string"],
+      "nutrient_surpluses": ["string"],
+      "streak_days": "number"
+    }
+  },
+  "feedback_templates": {
+    "under_protein": "You've had {protein_g}g of protein today, which is {gap}g below your target. Consider adding Greek yogurt, eggs, or a handful of nuts to your next meal.",
+    "over_calories": "You're {surplus} calories over your daily target. Tomorrow, try balancing with lighter meals — a big salad with lean protein is a great option.",
+    "low_fiber": "Fiber intake is low today ({fiber_g}g vs {target}g). Add vegetables, legumes, or whole grains to boost gut health.",
+    "great_day": "Excellent job today! You hit your calorie target and your protein and fiber intake were on point. Keep it up!"
+  },
+  "gamification": {
+    "streaks": true,
+    "badges": ["7-day streak", "Protein Pro", "Fiber Champion", "Hydration Hero"],
+    "weekly_report_card": true
+  },
+  "tools": [
+    "nlp_food_entity_extractor",
+    "nutrition_knowledge_agent_call",
+    "daily_intake_aggregator",
+    "nutrient_gap_analyzer",
+    "feedback_generator",
+    "progress_chart_data_emitter"
+  ],
+  "output_schema": {
+    "logged_meals": ["object"],
+    "daily_totals": "object",
+    "vs_targets": "object",
+    "deficiencies": ["string"],
+    "surpluses": ["string"],
+    "feedback_message": "string",
+    "tips": ["string"],
+    "streak": "number"
+  }
+}

@@ -1,0 +1,60 @@
+[
+  {
+    "condition": "Type 2 Diabetes",
+    "guideline_source": "American Diabetes Association (ADA) Standards of Care 2024",
+    "overview": "Dietary management of Type 2 Diabetes focuses on controlling blood glucose, reducing cardiovascular risk, and achieving a healthy body weight through carbohydrate quality and quantity management.",
+    "priority_foods": ["non-starchy vegetables", "legumes", "whole grains (oats, barley, quinoa)", "lean proteins (chicken, fish, tofu)", "healthy fats (avocado, olive oil, nuts)", "low-GI fruits (berries, apples, pears)"],
+    "limit_foods": ["white rice", "white bread", "sugary drinks", "fruit juices", "processed snacks"],
+    "avoid_foods": ["trans fats", "high-sugar desserts", "sweetened beverages", "refined carbohydrates"],
+    "meal_pattern": "3 structured meals + 1-2 snacks per day; consistent carbohydrate distribution; do not skip meals",
+    "carb_target_g": "45-60g per meal; 15-30g per snack",
+    "glycemic_index_target": "Prefer foods with GI < 55",
+    "special_notes": "Mediterranean and DASH diets both show strong evidence for diabetes management. Monitor blood glucose 2 hours after meals."
+  },
+  {
+    "condition": "Cardiovascular Disease & High Cholesterol",
+    "guideline_source": "American Heart Association (AHA) Dietary Guidelines 2021",
+    "overview": "A heart-healthy diet reduces LDL cholesterol, triglycerides, blood pressure, and inflammation. Emphasizes plant-based foods, healthy fats, and limits saturated and trans fats.",
+    "priority_foods": ["oily fish (salmon, mackerel, sardines) 2x/week", "nuts and seeds", "olive oil", "fruits and vegetables (5+ portions/day)", "whole grains", "legumes"],
+    "limit_foods": ["saturated fats (<7% of total calories)", "sodium (<2300mg/day)", "red and processed meats", "full-fat dairy"],
+    "avoid_foods": ["trans fats (hydrogenated oils)", "processed meats (bacon, sausage)", "fried foods", "tropical oils (palm, coconut) in excess"],
+    "sodium_limit_mg": 2300,
+    "saturated_fat_max_pct": 7,
+    "omega3_target_g": 1.0,
+    "diet_patterns": ["Mediterranean Diet", "Portfolio Diet", "DASH Diet"]
+  },
+  {
+    "condition": "Hypertension (High Blood Pressure)",
+    "guideline_source": "DASH Diet — National Heart, Lung, and Blood Institute (NHLBI)",
+    "overview": "The DASH (Dietary Approaches to Stop Hypertension) diet is the gold standard for managing high blood pressure through dietary means.",
+    "priority_foods": ["fruits and vegetables (8-10 servings/day)", "low-fat dairy (2-3 servings/day)", "whole grains", "legumes", "nuts and seeds", "potassium-rich foods (bananas, sweet potato, spinach)"],
+    "limit_foods": ["sodium (<1500mg/day for stage 2 hypertension)", "red meat", "sweets"],
+    "avoid_foods": ["high-sodium processed foods", "pickled foods", "soy sauce in excess", "canned soups"],
+    "sodium_limit_mg": 1500,
+    "key_nutrients": ["potassium (4700mg/day)", "magnesium (420mg/day)", "calcium (1200mg/day)"],
+    "diet_pattern": "DASH Diet"
+  },
+  {
+    "condition": "Chronic Kidney Disease (CKD, non-dialysis)",
+    "guideline_source": "KDOQI Clinical Practice Guidelines for Nutrition in CKD 2020",
+    "overview": "CKD diet focuses on protecting kidney function by limiting nutrients that accumulate in the blood when kidneys are impaired. Protein restriction may slow progression.",
+    "priority_foods": ["low-potassium fruits (apples, berries, grapes)", "white rice", "pasta", "egg whites", "low-phosphorus proteins"],
+    "limit_foods": ["high-potassium foods (bananas, potatoes, tomatoes — leach potatoes)", "high-phosphorus foods (dairy, nuts, whole grains)", "protein (0.6-0.8g/kg BW)"],
+    "avoid_foods": ["processed foods with phosphate additives", "dark colas (phosphoric acid)", "potassium salt substitutes"],
+    "protein_target": "0.6-0.8g/kg body weight",
+    "phosphorus_limit_mg": 800,
+    "potassium_limit_mg": 2000,
+    "sodium_limit_mg": 2300
+  },
+  {
+    "condition": "Obesity / Weight Management",
+    "guideline_source": "WHO & NICE Guidelines on Obesity Management",
+    "overview": "Sustainable weight loss requires a moderate caloric deficit combined with high satiety foods, regular eating patterns, and behavior change support.",
+    "caloric_deficit_kcal": 500,
+    "priority_foods": ["high-volume, low-calorie foods (vegetables, soups)", "lean proteins (keep satiated)", "legumes", "whole fruits (not juice)", "water (before meals)"],
+    "limit_foods": ["calorie-dense snacks", "liquid calories (juices, alcohol)", "ultra-processed foods"],
+    "avoid_foods": ["skip skipping meals — leads to overeating"],
+    "meal_pattern": "3 regular meals; avoid snacking; mindful eating practices",
+    "evidence_based_patterns": ["Mediterranean Diet", "Low-carb diet (short-term)", "Intermittent Fasting (16:8)"]
+  }
+]

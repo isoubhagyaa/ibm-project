@@ -1,0 +1,23 @@
+vector_store:
+  provider: "chromadb"                       # Options: chromadb, milvus, ibm-watson-discovery
+  persist_directory: "./data/chroma_db"
+  collection_name: "food_nutrition_kb"
+
+chromadb:
+  host: "localhost"
+  port: 8000
+  embedding_function: "ibm_slate"           # Uses IBM Slate embedding model
+
+milvus:                                      # Alternative: IBM-hosted Milvus
+  host: "${MILVUS_HOST}"
+  port: 19530
+  collection: "nutrition_vectors"
+
+seeding:
+  sources:
+    - path: "./data/food_database/usda_foods_sample.json"
+      doc_type: "food_nutrition"
+    - path: "./data/food_database/disease_diet_guidelines.json"
+      doc_type: "health_guideline"
+  chunk_size: 500
+  chunk_overlap: 50

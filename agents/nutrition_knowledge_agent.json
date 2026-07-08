@@ -1,0 +1,65 @@
+{
+  "agent_id": "nutrition-knowledge-agent",
+  "name": "Nutrition Knowledge Agent",
+  "version": "1.0.0",
+  "description": "Retrieves and summarizes nutritional data from the USDA FoodData API and internal vector knowledge base using RAG. Returns calories, macros (protein, fat, carbs), micronutrients (vitamins, minerals), and allergen information.",
+  "ibm_model": {
+    "provider": "ibm",
+    "model_id": "ibm/granite-13b-chat-v2",
+    "endpoint": "https://us-south.ml.cloud.ibm.com",
+    "parameters": {
+      "max_new_tokens": 1024,
+      "temperature": 0.2,
+      "top_p": 0.9,
+      "repetition_penalty": 1.1
+    }
+  },
+  "rag_config": {
+    "vector_store": "chromadb",
+    "collection_name": "food_nutrition_kb",
+    "embedding_model": "ibm/slate-125m-english-rtrvr",
+    "top_k": 5,
+    "similarity_threshold": 0.75
+  },
+  "external_apis": [
+    {
+      "name": "USDA FoodData Central",
+      "base_url": "https://api.nal.usda.gov/fdc/v1",
+      "endpoints": {
+        "search": "/foods/search",
+        "detail": "/food/{fdcId}"
+      },
+      "auth": "api_key_header",
+      "key_env_var": "USDA_API_KEY"
+    }
+  ],
+  "system_prompt": "You are a Nutrition Knowledge Agent. Your role is to retrieve accurate, evidence-based nutritional information from verified sources. When a user asks about a food item, retrieve its nutritional profile including: calories per serving, macronutrients (protein, carbohydrates, fats, fiber), key micronutrients (vitamins A, C, D, B12, iron, calcium, potassium), allergen flags, and glycemic index where available. Always cite the data source (USDA FoodData Central or knowledge base). Respond in a structured, concise format. Never fabricate nutritional values.",
+  "tools": [
+    "usda_food_search",
+    "rag_knowledge_retrieval",
+    "nutrient_calculator",
+    "allergen_checker"
+  ],
+  "output_schema": {
+    "food_name": "string",
+    "serving_size": "string",
+    "calories": "number",
+    "macros": {
+      "protein_g": "number",
+      "carbs_g": "number",
+      "fat_g": "number",
+      "fiber_g": "number"
+    },
+    "micros": {
+      "vitamin_c_mg": "number",
+      "vitamin_d_iu": "number",
+      "calcium_mg": "number",
+      "iron_mg": "number",
+      "potassium_mg": "number"
+    },
+    "allergens": ["string"],
+    "glycemic_index": "number",
+    "data_source": "string"
+  },
+  "handoff_to": ["diet-recommendation-agent", "food-log-feedback-agent"]
+}
